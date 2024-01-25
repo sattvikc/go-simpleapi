@@ -82,6 +82,58 @@ func (s *Server) POST(path string, handlers ...interface{}) error {
 	return nil
 }
 
+func (s *Server) PUT(path string, handlers ...interface{}) error {
+
+	handlerInstances, err := getHandlerInstances(handlers...)
+	if err != nil {
+		return err
+	}
+
+	s.addToSwagger(path, handlerInstances, "put")
+
+	s.mux.PUT(path, func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		ctx := &Context{
+			Request:      r,
+			Response:     w,
+			params:       p,
+			nextHandlers: handlerInstances,
+		}
+		err := ctx.Next()
+		if err != nil {
+			fmt.Println(err)
+			// TODO handle error
+		}
+	})
+
+	return nil
+}
+
+func (s *Server) DELETE(path string, handlers ...interface{}) error {
+
+	handlerInstances, err := getHandlerInstances(handlers...)
+	if err != nil {
+		return err
+	}
+
+	s.addToSwagger(path, handlerInstances, "delete")
+
+	s.mux.DELETE(path, func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		ctx := &Context{
+			Request:      r,
+			Response:     w,
+			params:       p,
+			nextHandlers: handlerInstances,
+		}
+		err := ctx.Next()
+		if err != nil {
+			fmt.Println(err)
+			// TODO handle error
+		}
+	})
+
+	return nil
+}
+
 func (s *Server) addToSwagger(path string, handlers []Handler, method string) {
 	definition := map[string]interface{}{
 		"parameters": []interface{}{},
