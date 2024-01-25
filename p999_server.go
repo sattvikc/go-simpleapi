@@ -32,7 +32,7 @@ func (s *Server) ListenAndServe(addr string) error {
 }
 
 func (s *Server) GET(path string, handlers ...interface{}) error {
-	handlerInstances, err := s.getHandlerInstances(handlers...)
+	handlerInstances, err := getHandlerInstances(handlers...)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func (s *Server) GET(path string, handlers ...interface{}) error {
 
 func (s *Server) POST(path string, handlers ...interface{}) error {
 
-	handlerInstances, err := s.getHandlerInstances(handlers...)
+	handlerInstances, err := getHandlerInstances(handlers...)
 	if err != nil {
 		return err
 	}

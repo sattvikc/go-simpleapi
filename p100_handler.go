@@ -35,7 +35,7 @@ func (h Handler) handle(ctx *Context) error {
 	return nil
 }
 
-func (s *Server) getHandlerInstances(handlers ...interface{}) ([]Handler, error) {
+func getHandlerInstances(handlers ...interface{}) ([]Handler, error) {
 	handlerInstances := make([]Handler, len(handlers))
 
 	for idx, handler := range handlers {
