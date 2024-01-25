@@ -61,15 +61,19 @@ func (h Handler) createParam(ctx *Context, pType reflect.Type, pVal reflect.Valu
 			}
 
 		} else if pType.Field(i).Tag.Get("query") != "" {
-			err := setValue(pVal.Field(i), ctx.Request.URL.Query().Get(pType.Field(i).Tag.Get("query")))
-			if err != nil {
-				return err
+			if pVal.Field(i).Type().Kind() != reflect.Ptr || ctx.Request.URL.Query().Get(pType.Field(i).Tag.Get("query")) != "" {
+				err := setValue(pVal.Field(i), ctx.Request.URL.Query().Get(pType.Field(i).Tag.Get("query")))
+				if err != nil {
+					return err
+				}
 			}
 
 		} else if pType.Field(i).Tag.Get("header") != "" {
-			err := setValue(pVal.Field(i), ctx.Request.Header.Get(pType.Field(i).Tag.Get("header")))
-			if err != nil {
-				return err
+			if pVal.Field(i).Type().Kind() != reflect.Ptr || ctx.Request.Header.Get(pType.Field(i).Tag.Get("header")) != "" {
+				err := setValue(pVal.Field(i), ctx.Request.Header.Get(pType.Field(i).Tag.Get("header")))
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}

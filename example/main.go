@@ -8,7 +8,7 @@ import (
 
 type LoginPOST struct {
 	TenantId      string `path:"tenantId"`
-	Authorization string `header:"Authorization"`
+	Authorization *int   `header:"Authorization"`
 
 	Role    string `query:"role"`
 	Headers struct {
@@ -20,12 +20,12 @@ type LoginPOST struct {
 	Body struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
-		Id       int    `json:"id"`
+		Id       *int   `json:"id"`
 	} `body:"json"`
 }
 
 func loginPOST(ctx *fastapi.Context, req LoginPOST) error {
-	fmt.Println("Request:", req, ctx)
+	fmt.Printf("Request: %+v", req)
 
 	ctx.JSON(200, map[string]interface{}{
 		"status": "OK",

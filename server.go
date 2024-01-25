@@ -194,14 +194,13 @@ func (s *Server) updateDefinitionFromhandler(definition map[string]interface{}, 
 
 		} else if field.Type.Kind() == reflect.Struct {
 			s.updateDefinitionFromhandler(definition, field.Type)
+
 		} else if field.Tag.Get("query") != "" {
 			queryDefinition := map[string]interface{}{
 				"in":       "query",
 				"name":     field.Tag.Get("query"),
-				"required": true, // TODO
-				"schema": map[string]interface{}{
-					"type": "string",
-				},
+				"required": field.Type.Kind() != reflect.Ptr,
+				"schema":   s.getSwaggerSchemaFromType(field.Type),
 			}
 			definition["parameters"] = append(definition["parameters"].([]interface{}), queryDefinition)
 
@@ -212,10 +211,8 @@ func (s *Server) updateDefinitionFromhandler(definition map[string]interface{}, 
 			headerDefinition := map[string]interface{}{
 				"in":       "header",
 				"name":     field.Tag.Get("header"),
-				"required": true, // TODO
-				"schema": map[string]interface{}{
-					"type": "string",
-				},
+				"required": field.Type.Kind() != reflect.Ptr,
+				"schema":   s.getSwaggerSchemaFromType(field.Type),
 			}
 			definition["parameters"] = append(definition["parameters"].([]interface{}), headerDefinition)
 
@@ -229,7 +226,6 @@ func (s *Server) updateDefinitionFromhandler(definition map[string]interface{}, 
 				},
 			}
 			definition["parameters"] = append(definition["parameters"].([]interface{}), pathDefinition)
-
 		}
 	}
 }
@@ -242,19 +238,29 @@ func (s *Server) getSwaggerSchemaFromType(t reflect.Type) interface{} {
 		}
 	}
 
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
 	if t.Kind() == reflect.Struct {
 		properties := map[string]interface{}{}
 
+		required := []string{}
 		for i := 0; i < t.NumField(); i++ {
 			field := t.Field(i)
 			if field.Tag.Get("json") != "" {
 				properties[field.Tag.Get("json")] = s.getSwaggerSchemaFromType(field.Type)
+
+				if field.Type.Kind() != reflect.Ptr {
+					required = append(required, field.Tag.Get("json"))
+				}
 			}
 		}
 
 		return map[string]interface{}{
 			"type":       "object",
 			"properties": properties,
+			"required":   required,
 		}
 	}
 

@@ -7,6 +7,12 @@ import (
 )
 
 func setValue(valueObj reflect.Value, value string) error {
+
+	if valueObj.Kind() == reflect.Ptr {
+		valueObj.Set(reflect.New(valueObj.Type().Elem()))
+		valueObj = valueObj.Elem()
+	}
+
 	switch valueObj.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		// Parse value as integer
