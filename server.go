@@ -264,6 +264,13 @@ func (s *Server) getSwaggerSchemaFromType(t reflect.Type) interface{} {
 		}
 	}
 
+	if t.Kind() == reflect.Slice {
+		return map[string]interface{}{
+			"type":  "array",
+			"items": s.getSwaggerSchemaFromType(t.Elem()),
+		}
+	}
+
 	switch t.Kind() {
 	case reflect.String:
 		return map[string]interface{}{

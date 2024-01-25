@@ -21,6 +21,13 @@ type LoginPOST struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 		Id       *int   `json:"id"`
+
+		Numbers []int `json:"numbers"`
+
+		Items []struct {
+			Name    string   `json:"name"`
+			Address *float64 `json:"address"`
+		} `json:"items"`
 	} `body:"json"`
 }
 
