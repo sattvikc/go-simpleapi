@@ -3,6 +3,7 @@ package fastapi
 import (
 	"fmt"
 	"net/http"
+	"reflect"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -13,7 +14,7 @@ type Server struct {
 }
 
 func New() *Server {
-	return &Server{
+	s := &Server{
 		mux: httprouter.New(),
 		swaggerJson: map[string]interface{}{
 			"openapi": "3.0.0",
@@ -24,11 +25,16 @@ func New() *Server {
 			"paths": map[string]interface{}{},
 		},
 	}
+	addSwaggerRoutes(s)
+	return s
 }
 
 func (s *Server) ListenAndServe(addr string) error {
-	addSwaggerRoutes(s)
 	return http.ListenAndServe(addr, s.mux)
+}
+
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.mux.ServeHTTP(w, r)
 }
 
 func (s *Server) GET(path string, handlers ...interface{}) error {
@@ -36,8 +42,6 @@ func (s *Server) GET(path string, handlers ...interface{}) error {
 	if err != nil {
 		return err
 	}
-
-	s.addToSwagger(path, handlerInstances, "get")
 
 	s.mux.GET(path, func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		ctx := &Context{
@@ -63,8 +67,6 @@ func (s *Server) POST(path string, handlers ...interface{}) error {
 		return err
 	}
 
-	s.addToSwagger(path, handlerInstances, "post")
-
 	s.mux.POST(path, func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		ctx := &Context{
 			Request:      r,
@@ -88,8 +90,6 @@ func (s *Server) PUT(path string, handlers ...interface{}) error {
 	if err != nil {
 		return err
 	}
-
-	s.addToSwagger(path, handlerInstances, "put")
 
 	s.mux.PUT(path, func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		ctx := &Context{
@@ -115,8 +115,6 @@ func (s *Server) DELETE(path string, handlers ...interface{}) error {
 		return err
 	}
 
-	s.addToSwagger(path, handlerInstances, "delete")
-
 	s.mux.DELETE(path, func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		ctx := &Context{
 			Request:      r,
@@ -134,10 +132,15 @@ func (s *Server) DELETE(path string, handlers ...interface{}) error {
 	return nil
 }
 
-func (s *Server) addToSwagger(path string, handlers []Handler, method string) {
+func (s *Server) addToSwagger(path string, handlers []Handler, method string, tags []string, responseTypes []struct {
+	code        int
+	response    interface{}
+	description string
+}) {
 	definition := map[string]interface{}{
 		"parameters": []interface{}{},
 		"responses":  map[string]interface{}{},
+		"tags":       tags,
 	}
 
 	if method != "get" {
@@ -155,4 +158,36 @@ func (s *Server) addToSwagger(path string, handlers []Handler, method string) {
 	if _, ok := s.swaggerJson["paths"].(map[string]interface{})[path].(map[string]interface{})[method]; !ok {
 		s.swaggerJson["paths"].(map[string]interface{})[path].(map[string]interface{})[method] = definition
 	}
+
+	for _, responseType := range responseTypes {
+		definition["responses"].(map[string]interface{})[fmt.Sprintf("%d", responseType.code)] = map[string]interface{}{
+			"description": responseType.description,
+			"content": map[string]interface{}{
+				"application/json": map[string]interface{}{
+					"schema": getSwaggerSchemaFromType(reflect.TypeOf(responseType.response)),
+				},
+			},
+		}
+	}
+}
+
+func (s *Server) Endpoint(path string, handlerFuncs ...func(e *Endpoint) interface{}) {
+	e := &Endpoint{
+		server:   s,
+		path:     path,
+		handlers: make([]interface{}, len(handlerFuncs)),
+		tags:     []string{},
+	}
+
+	for i, handlerFunc := range handlerFuncs {
+		e.handlers[i] = handlerFunc(e)
+	}
+
+	handlerInstances, err := getHandlerInstances(e.handlers...)
+	if err != nil {
+		panic(err)
+	}
+
+	e.handlerInstances = handlerInstances
+	e.register()
 }

@@ -6,43 +6,57 @@ import (
 	"github.com/sattvikc/go-fastapi"
 )
 
-type LoginPOST struct {
-	TenantId      string `path:"tenantId"`
-	Authorization *int   `header:"Authorization"`
-
-	Role    string `query:"role"`
-	Headers struct {
-		ContentType   string `header:"Content-Type"`
-		ContentLength uint64 `header:"Content-Length"`
-		UserAgent     string `header:"User-Agent"`
-	}
-
+type CreateBook struct {
 	Body struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-		Id       *int   `json:"id"`
-
-		Numbers []int `json:"numbers"`
-
-		Items []struct {
-			Name    string   `json:"name"`
-			Address *float64 `json:"address"`
-		} `json:"items"`
+		Title  string `json:"title"`
+		ISBN   string `json:"isbn"`
+		Author string `json:"author"`
 	} `body:"json"`
 }
 
-func loginPOST(ctx *fastapi.Context, req LoginPOST) error {
-	fmt.Printf("Request: %+v", req)
+type CreateBookOK struct {
+	Status string `json:"status"`
+	Book   struct {
+		Id     string `json:"id"`
+		Title  string `json:"title"`
+		ISBN   string `json:"isbn"`
+		Author string `json:"author"`
+	} `json:"book"`
+}
 
-	ctx.JSON(200, map[string]interface{}{
-		"status": "OK",
-	})
+func createBook(e *fastapi.Endpoint) interface{} {
+	e.WithTag("Books").
+		WithResponse(201, CreateBookOK{}, "Book created").
+		POST()
 
-	return nil
+	return func(ctx *fastapi.Context, req CreateBook) error {
+		fmt.Printf("Request: %+v", req)
+
+		ctx.JSON(200, map[string]interface{}{
+			"status": "OK",
+		})
+
+		return nil
+	}
+}
+
+func withAuth(e *fastapi.Endpoint) interface{} {
+	type Unauthorised struct {
+		Reason string `json:"reason"`
+	}
+
+	e.WithResponse(401, Unauthorised{}, "Unauthorised")
+
+	return func(ctx *fastapi.Context, headers struct {
+		Authorization string `header:"Authorization"`
+	}) error {
+		fmt.Println("Authorization:", headers.Authorization)
+		return ctx.Next()
+	}
 }
 
 func main() {
-	server := fastapi.New()
-	server.POST("/:tenantId/login", loginPOST)
-	server.ListenAndServe(":8000")
+	app := fastapi.New()
+	app.Endpoint("/books", withAuth, createBook)
+	app.ListenAndServe(":8000")
 }
