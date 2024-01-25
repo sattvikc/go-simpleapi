@@ -159,14 +159,34 @@ func (s *Server) addToSwagger(path string, handlers []Handler, method string, ta
 		s.swaggerJson["paths"].(map[string]interface{})[path].(map[string]interface{})[method] = definition
 	}
 
+	responses := definition["responses"].(map[string]interface{})
 	for _, responseType := range responseTypes {
-		definition["responses"].(map[string]interface{})[fmt.Sprintf("%d", responseType.code)] = map[string]interface{}{
-			"description": responseType.description,
-			"content": map[string]interface{}{
-				"application/json": map[string]interface{}{
-					"schema": getSwaggerSchemaFromType(reflect.TypeOf(responseType.response)),
+		codeStr := fmt.Sprintf("%d", responseType.code)
+		schema := getSwaggerSchemaFromType(reflect.TypeOf(responseType.response))
+
+		if _, ok := responses[codeStr]; !ok {
+			responses[codeStr] = map[string]interface{}{
+				"description": responseType.description,
+				"content": map[string]interface{}{
+					"application/json": map[string]interface{}{
+						"schema": schema,
+					},
 				},
-			},
+			}
+		} else {
+			responses[codeStr].(map[string]interface{})["description"] = responses[codeStr].(map[string]interface{})["description"].(string) + " or " + responseType.description
+
+			eSchema := responses[codeStr].(map[string]interface{})["content"].(map[string]interface{})["application/json"].(map[string]interface{})["schema"].(map[string]interface{})
+			if _, ok := eSchema["oneOf"]; !ok {
+				responses[codeStr].(map[string]interface{})["content"].(map[string]interface{})["application/json"].(map[string]interface{})["schema"] = map[string]interface{}{
+					"oneOf": []interface{}{
+						eSchema,
+						schema,
+					},
+				}
+			} else {
+				eSchema["oneOf"] = append(eSchema["oneOf"].([]interface{}), schema)
+			}
 		}
 	}
 }

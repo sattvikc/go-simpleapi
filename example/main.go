@@ -24,9 +24,20 @@ type CreateBookOK struct {
 	} `json:"book"`
 }
 
+type CreateBookExists struct {
+	Status string `json:"status"`
+	Book   struct {
+		Id     string `json:"id"`
+		Title  string `json:"title"`
+		ISBN   string `json:"isbn"`
+		Author string `json:"author"`
+	} `json:"book"`
+}
+
 func createBook(e *fastapi.Endpoint) interface{} {
 	e.WithTag("Books").
-		WithResponse(201, CreateBookOK{}, "Book created").
+		WithResponse(200, CreateBookOK{}, "Book created").
+		WithResponse(200, CreateBookExists{}, "Book already exists").
 		POST()
 
 	return func(ctx *fastapi.Context, req CreateBook) error {
