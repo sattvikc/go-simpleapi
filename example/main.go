@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"mime/multipart"
 
 	"github.com/sattvikc/go-fastapi"
 )
@@ -20,10 +18,10 @@ type LoginPOST struct {
 	}
 
 	Body struct {
-		Username string         `form:"username"`
-		Password string         `form:"password"`
-		File     multipart.File `form:"file"`
-	} `body:"multipart"`
+		Username string `json:"username"`
+		Password string `json:"password"`
+		Id       int    `json:"id"`
+	} `body:"json"`
 }
 
 func loginPOST(ctx *fastapi.Context, req LoginPOST) error {
@@ -32,13 +30,6 @@ func loginPOST(ctx *fastapi.Context, req LoginPOST) error {
 	ctx.JSON(200, map[string]interface{}{
 		"status": "OK",
 	})
-
-	bytes, err := io.ReadAll(req.Body.File)
-	if err != nil {
-		return err
-	}
-	req.Body.File.Close()
-	fmt.Println(string(bytes))
 
 	return nil
 }
