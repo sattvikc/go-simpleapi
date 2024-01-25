@@ -37,3 +37,10 @@ func (c *Context) JSON(status int, data interface{}) error {
 	c.Response.Write(dataBytes)
 	return nil
 }
+
+func (c *Context) HTML(status int, html string) error {
+	c.Response.Header().Set("Content-Type", "text/html")
+	c.Response.WriteHeader(status)
+	c.Response.Write([]byte(html))
+	return nil
+}
