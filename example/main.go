@@ -62,7 +62,9 @@ func withAuth(e *fastapi.Endpoint) interface{} {
 		Authorization string `header:"Authorization"`
 	}) error {
 		fmt.Println("Authorization:", headers.Authorization)
-		return ctx.Next()
+		return ctx.JSON(401, Unauthorised{
+			Reason: "Token expired",
+		})
 	}
 }
 

@@ -8,13 +8,13 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-type Server struct {
+type App struct {
 	mux         *httprouter.Router
 	swaggerJson map[string]interface{}
 }
 
-func New() *Server {
-	s := &Server{
+func New() *App {
+	s := &App{
 		mux: httprouter.New(),
 		swaggerJson: map[string]interface{}{
 			"openapi": "3.0.0",
@@ -29,15 +29,15 @@ func New() *Server {
 	return s
 }
 
-func (s *Server) ListenAndServe(addr string) error {
+func (s *App) ListenAndServe(addr string) error {
 	return http.ListenAndServe(addr, s.mux)
 }
 
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.mux.ServeHTTP(w, r)
 }
 
-func (s *Server) GET(path string, handlers ...interface{}) error {
+func (s *App) GET(path string, handlers ...interface{}) error {
 	handlerInstances, err := getHandlerInstances(handlers...)
 	if err != nil {
 		return err
@@ -60,7 +60,7 @@ func (s *Server) GET(path string, handlers ...interface{}) error {
 	return nil
 }
 
-func (s *Server) POST(path string, handlers ...interface{}) error {
+func (s *App) POST(path string, handlers ...interface{}) error {
 
 	handlerInstances, err := getHandlerInstances(handlers...)
 	if err != nil {
@@ -84,7 +84,7 @@ func (s *Server) POST(path string, handlers ...interface{}) error {
 	return nil
 }
 
-func (s *Server) PUT(path string, handlers ...interface{}) error {
+func (s *App) PUT(path string, handlers ...interface{}) error {
 
 	handlerInstances, err := getHandlerInstances(handlers...)
 	if err != nil {
@@ -108,7 +108,7 @@ func (s *Server) PUT(path string, handlers ...interface{}) error {
 	return nil
 }
 
-func (s *Server) DELETE(path string, handlers ...interface{}) error {
+func (s *App) DELETE(path string, handlers ...interface{}) error {
 
 	handlerInstances, err := getHandlerInstances(handlers...)
 	if err != nil {
@@ -132,7 +132,7 @@ func (s *Server) DELETE(path string, handlers ...interface{}) error {
 	return nil
 }
 
-func (s *Server) addToSwagger(path string, handlers []Handler, method string, tags []string, responseTypes []struct {
+func (s *App) addToSwagger(path string, handlers []Handler, method string, tags []string, responseTypes []struct {
 	code        int
 	response    interface{}
 	description string
@@ -191,7 +191,7 @@ func (s *Server) addToSwagger(path string, handlers []Handler, method string, ta
 	}
 }
 
-func (s *Server) Endpoint(path string, handlerFuncs ...func(e *Endpoint) interface{}) {
+func (s *App) Endpoint(path string, handlerFuncs ...func(e *Endpoint) interface{}) {
 	e := &Endpoint{
 		server:   s,
 		path:     path,

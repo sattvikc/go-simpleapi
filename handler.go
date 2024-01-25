@@ -3,6 +3,8 @@ package fastapi
 import (
 	"errors"
 	"reflect"
+
+	"github.com/sattvikc/go-fastapi/reflection"
 )
 
 type Handler struct {
@@ -16,7 +18,7 @@ func (h Handler) handle(ctx *Context) error {
 	for idx, paramType := range h.paramTypes {
 		param := reflect.New(paramType).Elem()
 
-		err := populateValueFromTypeUsingContext(ctx, paramType, param)
+		err := reflection.PopulateValueFromTypeUsingContext(ctx.Request, ctx.params, paramType, param)
 		if err != nil {
 			return err
 		}

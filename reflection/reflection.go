@@ -1,17 +1,20 @@
-package fastapi
+package reflection
 
 import (
 	"encoding/json"
 	"fmt"
 	"mime/multipart"
+	"net/http"
 	"reflect"
 	"strconv"
+
+	"github.com/julienschmidt/httprouter"
 )
 
-func populateValueFromTypeUsingContext(ctx *Context, pType reflect.Type, pVal reflect.Value) error {
+func PopulateValueFromTypeUsingContext(request *http.Request, params httprouter.Params, pType reflect.Type, pVal reflect.Value) error {
 	for i := 0; i < pVal.NumField(); i++ {
 		if pType.Field(i).Tag.Get("body") == "json" {
-			decoder := json.NewDecoder(ctx.Request.Body)
+			decoder := json.NewDecoder(request.Body)
 			b := pVal.Field(i).Addr().Interface()
 			err := decoder.Decode(b)
 			if err != nil {
@@ -20,7 +23,7 @@ func populateValueFromTypeUsingContext(ctx *Context, pType reflect.Type, pVal re
 
 		} else if pType.Field(i).Tag.Get("body") == "urlencoded" {
 			for j := 0; j < pVal.Field(i).NumField(); j++ {
-				err := setValue(pVal.Field(i).Field(j), ctx.Request.FormValue(pType.Field(i).Type.Field(j).Tag.Get("form")))
+				err := setValue(pVal.Field(i).Field(j), request.FormValue(pType.Field(i).Type.Field(j).Tag.Get("form")))
 				if err != nil {
 					return err
 				}
@@ -31,14 +34,14 @@ func populateValueFromTypeUsingContext(ctx *Context, pType reflect.Type, pVal re
 				fileType := reflect.TypeOf((*multipart.File)(nil)).Elem()
 
 				if pVal.Field(i).Field(j).Type().ConvertibleTo(fileType) {
-					file, _, err := ctx.Request.FormFile(pType.Field(i).Type.Field(j).Tag.Get("form"))
+					file, _, err := request.FormFile(pType.Field(i).Type.Field(j).Tag.Get("form"))
 					if err != nil {
 						return err
 					}
 					pVal.Field(i).Field(j).Set(reflect.ValueOf(file))
 
 				} else {
-					err := setValue(pVal.Field(i).Field(j), ctx.Request.FormValue(pType.Field(i).Type.Field(j).Tag.Get("form")))
+					err := setValue(pVal.Field(i).Field(j), request.FormValue(pType.Field(i).Type.Field(j).Tag.Get("form")))
 					if err != nil {
 						return err
 					}
@@ -46,28 +49,28 @@ func populateValueFromTypeUsingContext(ctx *Context, pType reflect.Type, pVal re
 			}
 
 		} else if pType.Field(i).Type.Kind() == reflect.Struct {
-			err := populateValueFromTypeUsingContext(ctx, pType.Field(i).Type, pVal.Field(i))
+			err := PopulateValueFromTypeUsingContext(request, params, pType.Field(i).Type, pVal.Field(i))
 			if err != nil {
 				return err
 			}
 
 		} else if pType.Field(i).Tag.Get("path") != "" {
-			err := setValue(pVal.Field(i), ctx.params.ByName(pType.Field(i).Tag.Get("path")))
+			err := setValue(pVal.Field(i), params.ByName(pType.Field(i).Tag.Get("path")))
 			if err != nil {
 				return err
 			}
 
 		} else if pType.Field(i).Tag.Get("query") != "" {
-			if pVal.Field(i).Type().Kind() != reflect.Ptr || ctx.Request.URL.Query().Get(pType.Field(i).Tag.Get("query")) != "" {
-				err := setValue(pVal.Field(i), ctx.Request.URL.Query().Get(pType.Field(i).Tag.Get("query")))
+			if pVal.Field(i).Type().Kind() != reflect.Ptr || request.URL.Query().Get(pType.Field(i).Tag.Get("query")) != "" {
+				err := setValue(pVal.Field(i), request.URL.Query().Get(pType.Field(i).Tag.Get("query")))
 				if err != nil {
 					return err
 				}
 			}
 
 		} else if pType.Field(i).Tag.Get("header") != "" {
-			if pVal.Field(i).Type().Kind() != reflect.Ptr || ctx.Request.Header.Get(pType.Field(i).Tag.Get("header")) != "" {
-				err := setValue(pVal.Field(i), ctx.Request.Header.Get(pType.Field(i).Tag.Get("header")))
+			if pVal.Field(i).Type().Kind() != reflect.Ptr || request.Header.Get(pType.Field(i).Tag.Get("header")) != "" {
+				err := setValue(pVal.Field(i), request.Header.Get(pType.Field(i).Tag.Get("header")))
 				if err != nil {
 					return err
 				}

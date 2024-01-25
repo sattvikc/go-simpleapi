@@ -38,7 +38,7 @@ presets: [
 </html>
 `
 
-func addSwaggerRoutes(server *Server) {
+func addSwaggerRoutes(server *App) {
 	server.GET("/docs", func(ctx *Context) error {
 		return ctx.HTML(200, swaggerUI)
 	})

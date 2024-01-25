@@ -1,7 +1,7 @@
 package fastapi
 
 type Endpoint struct {
-	server           *Server
+	server           *App
 	path             string
 	method           string
 	handlers         []interface{}
