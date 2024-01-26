@@ -1,3 +1,3 @@
-module github.com/sattvikc/go-fastapi
+module github.com/sattvikc/go-strapi
 
 go 1.21.6

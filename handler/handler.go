@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/sattvikc/go-fastapi/reflection"
-	"github.com/sattvikc/go-fastapi/router"
+	"github.com/sattvikc/go-strapi/reflection"
+	"github.com/sattvikc/go-strapi/router"
 )
 
 type handler struct {

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/sattvikc/go-fastapi/handler"
-	"github.com/sattvikc/go-fastapi/router"
+	"github.com/sattvikc/go-strapi/handler"
+	"github.com/sattvikc/go-strapi/router"
 )
 
 type Context struct {

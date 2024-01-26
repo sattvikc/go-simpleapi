@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/sattvikc/go-fastapi"
+	"github.com/sattvikc/go-strapi"
 )
 
 type CreateBook struct {

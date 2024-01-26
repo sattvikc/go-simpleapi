@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/sattvikc/go-fastapi/handler"
-	"github.com/sattvikc/go-fastapi/router"
-	"github.com/sattvikc/go-fastapi/swagger"
+	"github.com/sattvikc/go-strapi/handler"
+	"github.com/sattvikc/go-strapi/router"
+	"github.com/sattvikc/go-strapi/swagger"
 )
 
 type App struct {

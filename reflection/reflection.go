@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/sattvikc/go-fastapi/router"
+	"github.com/sattvikc/go-strapi/router"
 )
 
 func PopulateValueFromTypeUsingContext(request *http.Request, params router.Params, pType reflect.Type, pVal reflect.Value) error {
