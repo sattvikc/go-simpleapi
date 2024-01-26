@@ -5,17 +5,19 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/sattvikc/go-fastapi/handler"
+	"github.com/sattvikc/go-fastapi/router"
+	"github.com/sattvikc/go-fastapi/swagger"
 )
 
 type App struct {
-	mux         *httprouter.Router
+	r           *router.Router
 	swaggerJson map[string]interface{}
 }
 
 func New() *App {
 	s := &App{
-		mux: httprouter.New(),
+		r: router.New(),
 		swaggerJson: map[string]interface{}{
 			"openapi": "3.0.0",
 			"info": map[string]interface{}{
@@ -30,109 +32,42 @@ func New() *App {
 }
 
 func (s *App) ListenAndServe(addr string) error {
-	return http.ListenAndServe(addr, s.mux)
+	return http.ListenAndServe(addr, s)
 }
 
 func (s *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.mux.ServeHTTP(w, r)
+	h, params := s.r.FindCall(r.URL.Path, r.Method)
+
+	if h == nil {
+		// TODO handler not found
+		return
+	}
+
+	ctx := &Context{
+		Request:  r,
+		Response: w,
+		params:   params,
+		next:     h.(*handler.Handler).Clone(),
+	}
+
+	err := ctx.Next()
+	if err != nil {
+		fmt.Println(err)
+		// TODO handle error
+	}
 }
 
-func (s *App) GET(path string, handlers ...interface{}) error {
-	handlerInstances, err := getHandlerInstances(handlers...)
+func (s *App) AddHandler(path string, method string, handlers ...interface{}) error {
+	h, err := handler.New(handlers...)
 	if err != nil {
 		return err
 	}
-
-	s.mux.GET(path, func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		ctx := &Context{
-			Request:      r,
-			Response:     w,
-			params:       p,
-			nextHandlers: handlerInstances,
-		}
-		err := ctx.Next()
-		if err != nil {
-			fmt.Println(err)
-			// TODO handle error
-		}
-	})
+	s.r.Add(path, method, h, "")
 
 	return nil
 }
 
-func (s *App) POST(path string, handlers ...interface{}) error {
-
-	handlerInstances, err := getHandlerInstances(handlers...)
-	if err != nil {
-		return err
-	}
-
-	s.mux.POST(path, func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		ctx := &Context{
-			Request:      r,
-			Response:     w,
-			params:       p,
-			nextHandlers: handlerInstances,
-		}
-		err := ctx.Next()
-		if err != nil {
-			fmt.Println(err)
-			// TODO handle error
-		}
-	})
-
-	return nil
-}
-
-func (s *App) PUT(path string, handlers ...interface{}) error {
-
-	handlerInstances, err := getHandlerInstances(handlers...)
-	if err != nil {
-		return err
-	}
-
-	s.mux.PUT(path, func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		ctx := &Context{
-			Request:      r,
-			Response:     w,
-			params:       p,
-			nextHandlers: handlerInstances,
-		}
-		err := ctx.Next()
-		if err != nil {
-			fmt.Println(err)
-			// TODO handle error
-		}
-	})
-
-	return nil
-}
-
-func (s *App) DELETE(path string, handlers ...interface{}) error {
-
-	handlerInstances, err := getHandlerInstances(handlers...)
-	if err != nil {
-		return err
-	}
-
-	s.mux.DELETE(path, func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		ctx := &Context{
-			Request:      r,
-			Response:     w,
-			params:       p,
-			nextHandlers: handlerInstances,
-		}
-		err := ctx.Next()
-		if err != nil {
-			fmt.Println(err)
-			// TODO handle error
-		}
-	})
-
-	return nil
-}
-
-func (s *App) addToSwagger(path string, handlers []Handler, method string, tags []string, responseTypes []struct {
+func (s *App) addToSwagger(path string, handlers *handler.Handler, method string, tags []string, responseTypes []struct {
 	code        int
 	response    interface{}
 	description string
@@ -147,8 +82,8 @@ func (s *App) addToSwagger(path string, handlers []Handler, method string, tags 
 		definition["requestBody"] = map[string]interface{}{}
 	}
 
-	for _, handler := range handlers {
-		updateDefinitionFromhandler(definition, handler.paramTypes)
+	for _, handler := range *handlers {
+		swagger.UpdateDefinitionUsingParamTypes(definition, handler.ParamTypes)
 	}
 
 	if _, ok := s.swaggerJson["paths"].(map[string]interface{})[path]; !ok {
@@ -162,7 +97,7 @@ func (s *App) addToSwagger(path string, handlers []Handler, method string, tags 
 	responses := definition["responses"].(map[string]interface{})
 	for _, responseType := range responseTypes {
 		codeStr := fmt.Sprintf("%d", responseType.code)
-		schema := getSwaggerSchemaFromType(reflect.TypeOf(responseType.response))
+		schema := swagger.GetSwaggerSchemaForType(reflect.TypeOf(responseType.response))
 
 		if _, ok := responses[codeStr]; !ok {
 			responses[codeStr] = map[string]interface{}{
@@ -193,7 +128,7 @@ func (s *App) addToSwagger(path string, handlers []Handler, method string, tags 
 
 func (s *App) Endpoint(path string, handlerFuncs ...func(e *Endpoint) interface{}) {
 	e := &Endpoint{
-		server:   s,
+		app:      s,
 		path:     path,
 		handlers: make([]interface{}, len(handlerFuncs)),
 		tags:     []string{},
@@ -203,7 +138,7 @@ func (s *App) Endpoint(path string, handlerFuncs ...func(e *Endpoint) interface{
 		e.handlers[i] = handlerFunc(e)
 	}
 
-	handlerInstances, err := getHandlerInstances(e.handlers...)
+	handlerInstances, err := handler.New(e.handlers...)
 	if err != nil {
 		panic(err)
 	}

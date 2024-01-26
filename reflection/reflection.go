@@ -8,10 +8,10 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/sattvikc/go-fastapi/router"
 )
 
-func PopulateValueFromTypeUsingContext(request *http.Request, params httprouter.Params, pType reflect.Type, pVal reflect.Value) error {
+func PopulateValueFromTypeUsingContext(request *http.Request, params router.Params, pType reflect.Type, pVal reflect.Value) error {
 	for i := 0; i < pVal.NumField(); i++ {
 		if pType.Field(i).Tag.Get("body") == "json" {
 			decoder := json.NewDecoder(request.Body)

@@ -1,11 +1,13 @@
 package fastapi
 
+import "github.com/sattvikc/go-fastapi/handler"
+
 type Endpoint struct {
-	server           *App
+	app              *App
 	path             string
 	method           string
 	handlers         []interface{}
-	handlerInstances []Handler
+	handlerInstances *handler.Handler
 	tags             []string
 	responseTypes    []struct {
 		code        int
@@ -48,17 +50,13 @@ func (e *Endpoint) DELETE() *Endpoint {
 	return e
 }
 
-func (e *Endpoint) register() {
-	e.server.addToSwagger(e.path, e.handlerInstances, e.method, e.tags, e.responseTypes)
+func (e *Endpoint) register() error {
+	e.app.addToSwagger(e.path, e.handlerInstances, e.method, e.tags, e.responseTypes)
 
-	switch e.method {
-	case "get":
-		e.server.GET(e.path, e.handlers...)
-	case "post":
-		e.server.POST(e.path, e.handlers...)
-	case "put":
-		e.server.PUT(e.path, e.handlers...)
-	case "delete":
-		e.server.DELETE(e.path, e.handlers...)
+	err := e.app.AddHandler(e.path, e.method, e.handlers...)
+	if err != nil {
+		return err
 	}
+
+	return nil
 }

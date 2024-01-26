@@ -5,25 +5,25 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/sattvikc/go-fastapi/handler"
+	"github.com/sattvikc/go-fastapi/router"
 )
 
 type Context struct {
-	Request      *http.Request
-	Response     http.ResponseWriter
-	params       httprouter.Params
-	nextHandlers []Handler
+	Request  *http.Request
+	Response http.ResponseWriter
+	params   router.Params
+	next     *handler.Handler
 }
 
 func (c *Context) Next() error {
-	if len(c.nextHandlers) == 0 {
+	if !c.next.HasNext() {
 		return nil
 	}
 
-	nextHandler := c.nextHandlers[0]
-	c.nextHandlers = c.nextHandlers[1:]
+	nextHandler := c.next.Get()
 
-	return nextHandler.handle(c)
+	return nextHandler.Invoke(c, c.Request, c.params)
 }
 
 func (c *Context) JSON(status int, data interface{}) error {
