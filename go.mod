@@ -1,6 +1,6 @@
 module github.com/sattvikc/go-simpleapi
 
-go 1.21.6
+go 1.20.13
 
 require github.com/stretchr/testify v1.8.4
 
