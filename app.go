@@ -1,13 +1,13 @@
-package fastapi
+package simpleapi
 
 import (
 	"fmt"
 	"net/http"
 	"reflect"
 
-	"github.com/sattvikc/go-strapi/handler"
-	"github.com/sattvikc/go-strapi/router"
-	"github.com/sattvikc/go-strapi/swagger"
+	"github.com/sattvikc/go-simpleapi/handler"
+	"github.com/sattvikc/go-simpleapi/router"
+	"github.com/sattvikc/go-simpleapi/swagger"
 )
 
 type App struct {

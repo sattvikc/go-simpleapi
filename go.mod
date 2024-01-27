@@ -1,4 +1,4 @@
-module github.com/sattvikc/go-strapi
+module github.com/sattvikc/go-simpleapi
 
 go 1.21.6
 

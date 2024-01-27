@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/sattvikc/go-strapi/router"
+	"github.com/sattvikc/go-simpleapi/router"
 	"github.com/stretchr/testify/assert"
 )
 

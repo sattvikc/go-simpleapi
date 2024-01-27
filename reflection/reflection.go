@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/sattvikc/go-strapi/router"
+	"github.com/sattvikc/go-simpleapi/router"
 )
 
 func PopulateValueFromTypeUsingContext(request *http.Request, params router.Params, pType reflect.Type, pVal reflect.Value) error {
@@ -96,6 +96,7 @@ func setValue(valueObj reflect.Value, value string) error {
 			return err
 		}
 		valueObj.SetInt(intValue)
+
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		// Parse value as unsigned integer
 		uintValue, err := strconv.ParseUint(value, 10, valueObj.Type().Bits())
@@ -103,6 +104,7 @@ func setValue(valueObj reflect.Value, value string) error {
 			return err
 		}
 		valueObj.SetUint(uintValue)
+
 	case reflect.Float32, reflect.Float64:
 		// Parse value as float
 		floatValue, err := strconv.ParseFloat(value, valueObj.Type().Bits())
@@ -110,6 +112,7 @@ func setValue(valueObj reflect.Value, value string) error {
 			return err
 		}
 		valueObj.SetFloat(floatValue)
+
 	case reflect.Bool:
 		// Parse value as boolean
 		boolValue, err := strconv.ParseBool(value)
@@ -117,9 +120,11 @@ func setValue(valueObj reflect.Value, value string) error {
 			return err
 		}
 		valueObj.SetBool(boolValue)
+
 	case reflect.String:
 		// Set value as string
 		valueObj.SetString(value)
+
 	default:
 		return fmt.Errorf("unsupported type: %v", valueObj.Kind())
 	}

@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/sattvikc/go-strapi"
+	"github.com/sattvikc/go-simpleapi"
 )
 
 type CreateBook struct {
@@ -34,13 +34,13 @@ type CreateBookExists struct {
 	} `json:"book"`
 }
 
-func createBook(e *fastapi.Endpoint) interface{} {
+func createBook(e *simpleapi.Endpoint) interface{} {
 	e.WithTag("Books").
 		WithResponse(200, CreateBookOK{}, "Book created").
 		WithResponse(200, CreateBookExists{}, "Book already exists").
 		POST()
 
-	return func(ctx *fastapi.Context, req CreateBook) error {
+	return func(ctx *simpleapi.Context, req CreateBook) error {
 		fmt.Printf("Request: %+v", req)
 
 		ctx.JSON(200, map[string]interface{}{
@@ -51,14 +51,14 @@ func createBook(e *fastapi.Endpoint) interface{} {
 	}
 }
 
-func withAuth(e *fastapi.Endpoint) interface{} {
+func withAuth(e *simpleapi.Endpoint) interface{} {
 	type Unauthorised struct {
 		Reason string `json:"reason"`
 	}
 
 	e.WithResponse(401, Unauthorised{}, "Unauthorised")
 
-	return func(ctx *fastapi.Context, headers struct {
+	return func(ctx *simpleapi.Context, headers struct {
 		Authorization string `header:"Authorization"`
 	}) error {
 		fmt.Println("Authorization:", headers.Authorization)
@@ -69,7 +69,7 @@ func withAuth(e *fastapi.Endpoint) interface{} {
 }
 
 func main() {
-	app := fastapi.New()
+	app := simpleapi.New()
 	app.Endpoint("/books", withAuth, createBook)
 	app.ListenAndServe(":8000")
 }

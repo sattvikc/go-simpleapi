@@ -1,4 +1,4 @@
-package fastapi
+package simpleapi
 
 import (
 	"net/http"

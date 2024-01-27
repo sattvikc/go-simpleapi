@@ -1,6 +1,6 @@
-package fastapi
+package simpleapi
 
-import "github.com/sattvikc/go-strapi/handler"
+import "github.com/sattvikc/go-simpleapi/handler"
 
 type Endpoint struct {
 	app              *App

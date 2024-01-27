@@ -1,12 +1,12 @@
-package fastapi
+package simpleapi
 
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
 
-	"github.com/sattvikc/go-strapi/handler"
-	"github.com/sattvikc/go-strapi/router"
+	"github.com/sattvikc/go-simpleapi/handler"
+	"github.com/sattvikc/go-simpleapi/router"
 )
 
 type Context struct {
