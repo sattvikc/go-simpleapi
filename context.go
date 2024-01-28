@@ -15,6 +15,7 @@ type Context struct {
 	params         router.Params
 	next           *handler.Handler
 	ResponseStatus int
+	contextStorage map[string]interface{}
 }
 
 func (c *Context) Next() error {
@@ -46,4 +47,17 @@ func (c *Context) HTML(status int, html string) error {
 	c.Response.WriteHeader(status)
 	c.Response.Write([]byte(html))
 	return nil
+}
+
+func (c *Context) Set(key string, value interface{}) {
+	c.contextStorage[key] = value
+}
+
+func (c *Context) Get(key string) interface{} {
+	return c.contextStorage[key]
+}
+
+func (c *Context) Has(key string) bool {
+	_, ok := c.contextStorage[key]
+	return ok
 }
