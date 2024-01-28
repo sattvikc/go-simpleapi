@@ -35,7 +35,7 @@ func New() interface{} {
 			os.Stderr,
 			"%s | %d | %s | %s | %s | %s\n",
 			time.Now().Format("2006-01-02 15:04:05"),
-			200, // response status
+			ctx.ResponseStatus, // response status
 			fomatDuration(timeTaken),
 			ctx.Request.RemoteAddr,
 			cGreen+ctx.Request.Method+reset,

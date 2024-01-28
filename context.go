@@ -10,10 +10,11 @@ import (
 )
 
 type Context struct {
-	Request  *http.Request
-	Response http.ResponseWriter
-	params   router.Params
-	next     *handler.Handler
+	Request        *http.Request
+	Response       http.ResponseWriter
+	params         router.Params
+	next           *handler.Handler
+	ResponseStatus int
 }
 
 func (c *Context) Next() error {
@@ -27,6 +28,7 @@ func (c *Context) Next() error {
 }
 
 func (c *Context) JSON(status int, data interface{}) error {
+	c.ResponseStatus = status
 	c.Response.Header().Set("Content-Type", "application/json")
 	c.Response.WriteHeader(status)
 	dataBytes, err := json.Marshal(data)
@@ -39,6 +41,7 @@ func (c *Context) JSON(status int, data interface{}) error {
 }
 
 func (c *Context) HTML(status int, html string) error {
+	c.ResponseStatus = status
 	c.Response.Header().Set("Content-Type", "text/html")
 	c.Response.WriteHeader(status)
 	c.Response.Write([]byte(html))

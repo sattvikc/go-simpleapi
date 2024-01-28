@@ -49,10 +49,11 @@ func (s *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := &Context{
-		Request:  r,
-		Response: w,
-		params:   params,
-		next:     h.(*handler.Handler).Clone(),
+		Request:        r,
+		Response:       w,
+		params:         params,
+		next:           h.(*handler.Handler).Clone(),
+		ResponseStatus: 200,
 	}
 
 	err := ctx.Next()
