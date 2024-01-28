@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/sattvikc/go-simpleapi"
+	"github.com/sattvikc/go-simpleapi/middleware/cors"
+	"github.com/sattvikc/go-simpleapi/middleware/logger"
 )
 
 type CreateBook struct {
@@ -70,6 +72,11 @@ func withAuth(e *simpleapi.Endpoint) interface{} {
 
 func main() {
 	app := simpleapi.New()
+
+	app.Use(cors.New())
+	app.Use(logger.New())
+
 	app.Endpoint("/books", withAuth, createBook)
+
 	app.ListenAndServe(":8000")
 }

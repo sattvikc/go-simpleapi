@@ -13,6 +13,7 @@ import (
 type App struct {
 	r           *router.Router
 	swaggerJson map[string]interface{}
+	middlewares []interface{}
 }
 
 func New() *App {
@@ -21,7 +22,7 @@ func New() *App {
 		swaggerJson: map[string]interface{}{
 			"openapi": "3.0.0",
 			"info": map[string]interface{}{
-				"title":   "FastAPI",
+				"title":   "SimpleAPI",
 				"version": "1.0.0",
 			},
 			"paths": map[string]interface{}{},
@@ -29,6 +30,10 @@ func New() *App {
 	}
 	addSwaggerRoutes(s)
 	return s
+}
+
+func (s *App) Use(handlerFunc interface{}) {
+	s.middlewares = append(s.middlewares, handlerFunc)
 }
 
 func (s *App) ListenAndServe(addr string) error {
@@ -58,7 +63,7 @@ func (s *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *App) AddHandler(path string, method string, handlers ...interface{}) error {
-	h, err := handler.New(handlers...)
+	h, err := handler.New(append(s.middlewares, handlers...)...)
 	if err != nil {
 		return err
 	}
