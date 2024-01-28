@@ -64,7 +64,7 @@ func (s *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *App) AddHandler(path string, method string, handlers ...interface{}) error {
-	h, err := handler.New(append(s.middlewares, handlers...)...)
+	h, err := handler.New(handlers...)
 	if err != nil {
 		return err
 	}
@@ -136,12 +136,14 @@ func (s *App) Endpoint(path string, handlerFuncs ...func(e *Endpoint) interface{
 	e := &Endpoint{
 		app:      s,
 		path:     path,
-		handlers: make([]interface{}, len(handlerFuncs)),
+		handlers: make([]interface{}, len(s.middlewares)+len(handlerFuncs)),
 		tags:     []string{},
 	}
 
+	copy(e.handlers, s.middlewares)
+
 	for i, handlerFunc := range handlerFuncs {
-		e.handlers[i] = handlerFunc(e)
+		e.handlers[i+len(s.middlewares)] = handlerFunc(e)
 	}
 
 	handlerInstances, err := handler.New(e.handlers...)
