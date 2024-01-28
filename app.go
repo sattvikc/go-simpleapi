@@ -13,6 +13,7 @@ import (
 type App struct {
 	r           *router.Router
 	swaggerJson map[string]interface{}
+	middlewares []interface{}
 }
 
 func New() *App {
@@ -21,7 +22,7 @@ func New() *App {
 		swaggerJson: map[string]interface{}{
 			"openapi": "3.0.0",
 			"info": map[string]interface{}{
-				"title":   "FastAPI",
+				"title":   "SimpleAPI",
 				"version": "1.0.0",
 			},
 			"paths": map[string]interface{}{},
@@ -29,6 +30,10 @@ func New() *App {
 	}
 	addSwaggerRoutes(s)
 	return s
+}
+
+func (s *App) Use(handlerFunc interface{}) {
+	s.middlewares = append(s.middlewares, handlerFunc)
 }
 
 func (s *App) ListenAndServe(addr string) error {
@@ -44,10 +49,11 @@ func (s *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := &Context{
-		Request:  r,
-		Response: w,
-		params:   params,
-		next:     h.(*handler.Handler).Clone(),
+		Request:        r,
+		Response:       w,
+		params:         params,
+		next:           h.(*handler.Handler).Clone(),
+		ResponseStatus: 200,
 	}
 
 	err := ctx.Next()
@@ -130,12 +136,14 @@ func (s *App) Endpoint(path string, handlerFuncs ...func(e *Endpoint) interface{
 	e := &Endpoint{
 		app:      s,
 		path:     path,
-		handlers: make([]interface{}, len(handlerFuncs)),
+		handlers: make([]interface{}, len(s.middlewares)+len(handlerFuncs)),
 		tags:     []string{},
 	}
 
+	copy(e.handlers, s.middlewares)
+
 	for i, handlerFunc := range handlerFuncs {
-		e.handlers[i] = handlerFunc(e)
+		e.handlers[i+len(s.middlewares)] = handlerFunc(e)
 	}
 
 	handlerInstances, err := handler.New(e.handlers...)

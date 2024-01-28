@@ -9,7 +9,6 @@ const swaggerUI = `<!DOCTYPE html>
 <head>
 <link type="text/css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@4/swagger-ui.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-themes@3.0.1/themes/3.x/theme-muted.min.css" />
-<link rel="shortcut icon" href="https://fastapi.tiangolo.com/img/favicon.png">
 <title>Swagger UI</title>
 </head>
 <body>
